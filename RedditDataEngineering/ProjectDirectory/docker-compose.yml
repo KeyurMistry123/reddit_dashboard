@@ -1,0 +1,56 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  airflow:
+    image: apache/airflow:2.8.0
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__FERNET_KEY= vqlIqDHvDNM_3sZ-9OI2oGHRtkyCo5Oz7ernqZKnpx8=
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__WEBSERVER__SECRET_KEY=supersecretkey1234567890abcdef1234567890abcdef
+      - AWS_DEFAULT_REGION=us-east-1
+    depends_on:
+      - postgres
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scripts:/opt/airflow/scripts
+      - ./data:/opt/airflow/data
+      - ./config:/opt/airflow/config
+      - ~/.aws:/root/.aws:ro
+    ports:
+      - "8080:8080"
+    command: webserver
+    build:
+      context: .
+      dockerfile: Dockerfile
+  scheduler:
+    image: apache/airflow:2.8.0
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__FERNET_KEY= vqlIqDHvDNM_3sZ-9OI2oGHRtkyCo5Oz7ernqZKnpx8=
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__WEBSERVER__SECRET_KEY=supersecretkey1234567890abcdef1234567890abcdef
+      - AWS_DEFAULT_REGION=us-east-1
+    depends_on:
+      - postgres
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scripts:/opt/airflow/scripts
+      - ./data:/opt/airflow/data
+      - ./config:/opt/airflow/config
+      - ~/.aws:/root/.aws:ro
+    command: scheduler
+    build:
+      context: .
+      dockerfile: Dockerfile
+volumes:
+  postgres_data: 
